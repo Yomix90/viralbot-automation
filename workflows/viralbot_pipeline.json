@@ -1,0 +1,220 @@
+{
+  "name": "ViralBot - Pipeline Vidéo Viral Complet",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "hours", "hoursInterval": 6 }]
+        }
+      },
+      "name": "Schedule - Cherche Tendances",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [240, 300],
+      "id": "1"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.VIRALBOT_API_URL }}/api/v1/youtube/trending",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ 'Bearer ' + $env.VIRALBOT_TOKEN }}" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "region_code", "value": "FR" }
+          ]
+        }
+      },
+      "name": "YouTube - Fetch Trending",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [460, 300],
+      "id": "2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter top 5 most viral videos\nconst videos = $input.first().json.videos || [];\nconst topVideos = videos\n  .filter(v => v.virality_score >= 50 && v.duration_seconds <= 300)\n  .slice(0, 5);\n\nreturn topVideos.map(video => ({ json: video }));"
+      },
+      "name": "Filter - Top Viral",
+      "type": "n8n-nodes-base.code",
+      "position": [680, 300],
+      "id": "3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.VIRALBOT_API_URL }}/api/v1/youtube/import",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ 'Bearer ' + $env.VIRALBOT_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "youtube_id", "value": "={{ $json.id }}" },
+            { "name": "youtube_title", "value": "={{ $json.title }}" },
+            { "name": "youtube_channel", "value": "={{ $json.channel }}" },
+            { "name": "youtube_url", "value": "={{ $json.url }}" },
+            { "name": "youtube_thumbnail", "value": "={{ $json.thumbnail }}" },
+            { "name": "youtube_views", "value": "={{ $json.view_count }}" },
+            { "name": "youtube_likes", "value": "={{ $json.like_count }}" },
+            { "name": "youtube_duration", "value": "={{ $json.duration_seconds }}" },
+            { "name": "virality_score", "value": "={{ $json.virality_score }}" }
+          ]
+        }
+      },
+      "name": "Import - YouTube to Pipeline",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [900, 300],
+      "id": "4"
+    },
+    {
+      "parameters": {
+        "amount": 300
+      },
+      "name": "Wait - Processing (5min)",
+      "type": "n8n-nodes-base.wait",
+      "position": [1120, 300],
+      "id": "5"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.VIRALBOT_API_URL }}/api/v1/videos/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ 'Bearer ' + $env.VIRALBOT_TOKEN }}" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "status", "value": "ready" }
+          ]
+        }
+      },
+      "name": "Check - Ready Videos",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1340, 300],
+      "id": "6"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.videos.length }}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "name": "IF - Videos Ready?",
+      "type": "n8n-nodes-base.if",
+      "position": [1560, 300],
+      "id": "7"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.VIRALBOT_API_URL }}/api/v1/videos/{{ $json.videos[0].id }}/approve",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ 'Bearer ' + $env.VIRALBOT_TOKEN }}" }
+          ]
+        }
+      },
+      "name": "Auto-Approve Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1780, 200],
+      "id": "8"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.VIRALBOT_API_URL }}/api/v1/tiktok/publish",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ 'Bearer ' + $env.VIRALBOT_TOKEN }}" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "video_id", "value": "={{ $json.video_id }}" },
+            { "name": "account_id", "value": "={{ $env.TIKTOK_ACCOUNT_ID }}" },
+            { "name": "privacy_level", "value": "PUBLIC_TO_EVERYONE" }
+          ]
+        }
+      },
+      "name": "Publish to TikTok",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [2000, 200],
+      "id": "9"
+    },
+    {
+      "parameters": {
+        "message": "🚀 ViralBot: Nouvelle vidéo publiée sur TikTok!\n\nTitre: {{ $json.tiktok_title }}\nScore viral: {{ $json.virality_score }}",
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}"
+      },
+      "name": "Notify - Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "position": [2220, 200],
+      "id": "10"
+    }
+  ],
+  "connections": {
+    "Schedule - Cherche Tendances": {
+      "main": [[{ "node": "YouTube - Fetch Trending", "type": "main", "index": 0 }]]
+    },
+    "YouTube - Fetch Trending": {
+      "main": [[{ "node": "Filter - Top Viral", "type": "main", "index": 0 }]]
+    },
+    "Filter - Top Viral": {
+      "main": [[{ "node": "Import - YouTube to Pipeline", "type": "main", "index": 0 }]]
+    },
+    "Import - YouTube to Pipeline": {
+      "main": [[{ "node": "Wait - Processing (5min)", "type": "main", "index": 0 }]]
+    },
+    "Wait - Processing (5min)": {
+      "main": [[{ "node": "Check - Ready Videos", "type": "main", "index": 0 }]]
+    },
+    "Check - Ready Videos": {
+      "main": [[{ "node": "IF - Videos Ready?", "type": "main", "index": 0 }]]
+    },
+    "IF - Videos Ready?": {
+      "main": [
+        [{ "node": "Auto-Approve Video", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Auto-Approve Video": {
+      "main": [[{ "node": "Publish to TikTok", "type": "main", "index": 0 }]]
+    },
+    "Publish to TikTok": {
+      "main": [[{ "node": "Notify - Telegram", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
