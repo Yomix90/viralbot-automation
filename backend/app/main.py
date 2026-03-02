@@ -9,7 +9,7 @@ import os
 
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api.v1 import auth, youtube, videos, tiktok, ai, dashboard, settings as settings_router
+from app.api.v1 import auth, youtube, videos, tiktok, ai, dashboard, debug, settings as settings_router
 
 logger = structlog.get_logger()
 limiter = Limiter(key_func=get_remote_address)
@@ -46,6 +46,7 @@ app.include_router(videos.router, prefix="/api/v1/videos")
 app.include_router(tiktok.router, prefix="/api/v1/tiktok")
 app.include_router(ai.router, prefix="/api/v1/ai")
 app.include_router(dashboard.router, prefix="/api/v1/dashboard")
+app.include_router(debug.router, prefix="/api/v1/debug")
 app.include_router(settings_router.router, prefix="/api/v1/settings")
 
 @app.get("/api/health")
