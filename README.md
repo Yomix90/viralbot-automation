@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![ViralBot](https://img.shields.io/badge/ViralBot-1.0.0-ff0050?style=for-the-badge&logo=tiktok)
+![ViralBot](https://img.shields.io/badge/ViralBot-1.3.0-ff0050?style=for-the-badge&logo=tiktok)
 ![Python](https://img.shields.io/badge/Python-3.11-blue?style=for-the-badge&logo=python)
 ![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)
 ![Docker](https://img.shields.io/badge/Docker-Powered-2496ED?style=for-the-badge&logo=docker)
@@ -195,3 +195,4 @@ Le fichier `docker-compose.yml` est compatible Dokploy pour un déploiement en u
 <div align="center">
 Made with ❤️ by ViralBot Team
 </div>
+
