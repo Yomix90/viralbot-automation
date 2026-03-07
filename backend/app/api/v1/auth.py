@@ -38,9 +38,9 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    # Check if first user → make admin
-    user_count = await db.execute(select(User))
-    is_first = len(user_count.scalars().all()) == 0
+    user_count_result = await db.execute(select(User))
+    all_users = user_count_result.scalars().all()
+    is_first = len(all_users) == 0
     
     user = User(
         email=data.email,
