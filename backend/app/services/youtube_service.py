@@ -23,6 +23,41 @@ class YouTubeService:
         else:
             self.youtube = None
     
+    def _get_mock_videos(self) -> List[Dict]:
+        return [
+            {
+                "id": "dQw4w9WgXcQ",
+                "title": "[DEMO] Configurer la clé API YouTube",
+                "channel": "ViralBot Admin",
+                "description": "Aucune clé API YOUTUBE_API_KEY n'a été détectée dans l'environnement. Ceci est une vidéo de démonstration.",
+                "thumbnail": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+                "published_at": "2024-01-01T00:00:00Z",
+                "duration_seconds": 120,
+                "view_count": 1000000,
+                "like_count": 50000,
+                "comment_count": 1000,
+                "virality_score": 99.9,
+                "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                "category_id": "24",
+                "tags": ["demo"]
+            },
+            {
+                "id": "jNQXAC9IVRw",
+                "title": "[DEMO] Vidéo test numéro 2",
+                "channel": "jawed",
+                "thumbnail": "https://img.youtube.com/vi/jNQXAC9IVRw/hqdefault.jpg",
+                "published_at": "2005-04-23T20:27:11Z",
+                "duration_seconds": 19,
+                "view_count": 500000,
+                "like_count": 10000,
+                "comment_count": 500,
+                "virality_score": 85.0,
+                "url": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+                "category_id": "22",
+                "tags": ["demo"]
+            }
+        ]
+
     async def search_viral_videos(
         self,
         query: str = "",
@@ -35,7 +70,7 @@ class YouTubeService:
         video_duration: str = "medium"
     ) -> List[Dict[str, Any]]:
         if not self.youtube:
-            raise Exception("YouTube service not initialized.")
+            return self._get_mock_videos()
         try:
             params = {
                 "part": "snippet",
@@ -95,7 +130,8 @@ class YouTubeService:
             raise
     
     async def get_trending_videos(self, region_code: str = "US", category_id: str = "") -> List[Dict]:
-        if not self.youtube: raise Exception("YouTube service not initialized.")
+        if not self.youtube: 
+            return self._get_mock_videos()
         try:
             params = {"part": "snippet,statistics,contentDetails", "chart": "mostPopular", "regionCode": region_code, "maxResults": 50}
             if category_id: params["videoCategoryId"] = category_id
