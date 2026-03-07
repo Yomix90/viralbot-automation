@@ -20,11 +20,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (res) => res,
     (error) => {
-        if (error.response?.status === 401 && typeof window !== 'undefined') {
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
-        }
+        // AUTHENTICATION DISABLED - No redirect to login on 401
         return Promise.reject(error);
     }
 );
