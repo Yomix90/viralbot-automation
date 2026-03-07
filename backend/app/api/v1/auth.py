@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from datetime import datetime, timedelta
 
 from app.core.database import get_db
@@ -16,7 +16,7 @@ from app.models.user import User, UserRole
 router = APIRouter()
 
 class RegisterRequest(BaseModel):
-    email: EmailStr
+    email: str
     username: str
     password: str
     full_name: str = ""
@@ -42,32 +42,37 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
     all_users = user_count_result.scalars().all()
     is_first = len(all_users) == 0
     
-    user = User(
-        email=data.email,
-        username=data.username,
-        hashed_password=get_password_hash(data.password),
-        full_name=data.full_name,
-        is_admin=is_first,
-        role=UserRole.ADMIN if is_first else UserRole.EDITOR
-    )
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
-    
-    access_token = create_access_token({"sub": str(user.id)})
-    refresh_token = create_refresh_token({"sub": str(user.id)})
-    
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "user": {
-            "id": user.id,
-            "email": user.email,
-            "username": user.username,
-            "is_admin": user.is_admin,
-            "role": user.role
+    try:
+        user = User(
+            email=str(data.email),
+            username=str(data.username),
+            hashed_password=get_password_hash(data.password),
+            full_name=str(data.full_name),
+            is_admin=is_first,
+            role=UserRole.ADMIN if is_first else UserRole.EDITOR
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+        
+        access_token = create_access_token({"sub": str(user.id)})
+        refresh_token = create_refresh_token({"sub": str(user.id)})
+        
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "username": user.username,
+                "is_admin": user.is_admin,
+                "role": str(user.role.value if hasattr(user.role, 'value') else user.role)
+            }
         }
-    }
+    except Exception as e:
+        import traceback
+        error_msg = traceback.format_exc()
+        raise HTTPException(status_code=400, detail=f"Registration failed: {str(e)} | Trace: {error_msg}")
 
 @router.post("/login", response_model=TokenResponse)
 async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
@@ -95,7 +100,7 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
             "username": user.username,
             "full_name": user.full_name,
             "is_admin": user.is_admin,
-            "role": user.role
+            "role": str(user.role.value if hasattr(user.role, 'value') else user.role)
         }
     }
 
@@ -106,7 +111,7 @@ async def get_me(current_user: User = Depends(get_current_user)):
         "email": current_user.email,
         "username": current_user.username,
         "full_name": current_user.full_name,
-        "role": current_user.role,
+        "role": str(current_user.role.value if hasattr(current_user.role, 'value') else current_user.role),
         "is_admin": current_user.is_admin,
         "created_at": current_user.created_at
     }
