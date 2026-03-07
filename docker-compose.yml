@@ -83,7 +83,6 @@ services:
       - S3_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minioadmin123}
       - S3_BUCKET=${S3_BUCKET:-viralbot-videos}
     volumes:
-      - ./backend:/app
       - video_storage:/app/storage
     ports:
       - "8005:8000"
@@ -107,10 +106,6 @@ services:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-nextauth-secret}
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-      - /app/.next
     ports:
       - "3005:3000"
     depends_on:
