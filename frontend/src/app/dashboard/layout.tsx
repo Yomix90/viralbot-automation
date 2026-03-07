@@ -28,21 +28,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const [pendingCount, setPendingCount] = useState(0);
 
     useEffect(() => {
-        const userData = localStorage.getItem('user');
-        const token = localStorage.getItem('access_token');
-        if (!token) {
-            router.push('/login');
-            return;
-        }
-        if (userData) {
-            setUser(JSON.parse(userData));
-        }
+        // AUTHENTICATION DISABLED FOR DEV/TESTING
+        setUser({ id: 1, email: 'demo@viralbot.com', username: 'admin_dev', role: 'admin', is_admin: true });
     }, []);
 
     const handleLogout = () => {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user');
-        router.push('/login');
+        // Logout disabled while auth is bypassed
+        alert("Authentification désactivée pour le moment.");
     };
 
     return (
